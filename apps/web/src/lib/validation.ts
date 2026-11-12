@@ -11,5 +11,11 @@ export const clienteSchema = z.strictObject({
     telefone: z.string().trim().max(32).regex(/^[+()\d\s.-]*$/, "Telefone inválido.").optional(),
 });
 
+export const atualizarClienteSchema = clienteSchema.partial().refine(
+    (data) => Object.keys(data).length > 0,
+    "Informe pelo menos uma alteração.",
+);
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ClienteInput = z.infer<typeof clienteSchema>;
+export type AtualizarClienteInput = z.infer<typeof atualizarClienteSchema>;
