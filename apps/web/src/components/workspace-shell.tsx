@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Brand } from "@/components/brand";
@@ -24,7 +24,7 @@ export function WorkspaceShell({
     children,
     username,
 }: {
-    children: React.ReactNode;
+    children: ReactNode;
     username: string;
 }) {
     const pathname = usePathname();

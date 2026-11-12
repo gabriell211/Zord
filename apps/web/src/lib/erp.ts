@@ -59,7 +59,12 @@ function setCookieSession(headers: Headers): string | null {
     for (const cookie of cookies) {
         const match = /(?:^|[,;]\s*)session_id=([^;,\s]+)/i.exec(cookie);
         if (match?.[1]) {
-            const value = decodeURIComponent(match[1]);
+            let value: string;
+            try {
+                value = decodeURIComponent(match[1]);
+            } catch {
+                return null;
+            }
             if (/^[A-Za-z0-9._-]{16,256}$/.test(value)) return value;
         }
     }
@@ -110,7 +115,9 @@ export async function authenticate(usuario: string, senha: string) {
 
 export async function getErpSession(sessionId: string): Promise<ErpSession> {
     const reply = await erpRpc("/web/session/get_session_info", {}, sessionId);
-    return erpSessionSchema.parse(reply.data);
+    const result = erpSessionSchema.safeParse(reply.data);
+    if (!result.success) throw new ErpRequestError();
+    return result.data;
 }
 
 export async function destroyErpSession(sessionId: string): Promise<void> {
@@ -137,17 +144,22 @@ export async function listRecords(
     sessionId: string,
     model: string,
     fields: readonly string[],
+    query = "",
 ): Promise<Record<string, unknown>[]> {
     const result = await modelCall(sessionId, model, "search_read", [], {
-        domain: [],
+        domain: query ? [["name", "ilike", query]] : [],
         fields: Array.from(new Set(["id", ...fields])),
         limit: 30,
         order: "id desc",
     });
-    return z.array(z.record(z.string(), z.unknown())).parse(result);
+    const parsed = z.array(z.record(z.string(), z.unknown())).safeParse(result);
+    if (!parsed.success) throw new ErpRequestError();
+    return parsed.data;
 }
 
 export async function countRecords(sessionId: string, model: string): Promise<number> {
     const result = await modelCall(sessionId, model, "search_count", [[]]);
-    return z.number().int().nonnegative().parse(result);
+    const parsed = z.number().int().nonnegative().safeParse(result);
+    if (!parsed.success) throw new ErpRequestError();
+    return parsed.data;
 }

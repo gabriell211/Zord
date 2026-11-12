@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Icon } from "@/components/icons";
 import { LoginForm } from "@/components/login-form";
 
@@ -53,7 +54,9 @@ export default function LoginPage() {
                     <span className="form-kicker">BEM-VINDO DE VOLTA</span>
                     <h2>Acesse sua conta</h2>
                     <p className="form-description">Entre com suas credenciais para continuar de onde parou.</p>
-                    <LoginForm />
+                    <Suspense fallback={<div className="form-notice" role="status">Carregando formulário...</div>}>
+                        <LoginForm />
+                    </Suspense>
                     <div className="auth-assistance">
                         <Icon name="shield" size={16} />
                         Sua conexão é protegida.
