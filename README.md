@@ -13,9 +13,11 @@
 
 ## Instalação
 
-O código-base do ERP será importado de um commit fixo do projeto upstream por um fluxo de bootstrap neste repositório. Após a importação, instale PostgreSQL e os requisitos Python da versão-base e execute:
+O código-base do ERP Community 20.0 **já foi importado** para este repositório a partir de um commit fixo. Instale PostgreSQL e os requisitos Python da versão-base e execute:
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 python3 -m pip install -r requirements.txt
 bash scripts/inicializar-brasil.sh
 python3 odoo-bin -c config/zord.conf -d zord
