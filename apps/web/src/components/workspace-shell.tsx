@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Brand } from "@/components/brand";
 import { Icon, type IconName } from "@/components/icons";
 import { LogoutButton } from "@/components/logout-button";
+import { UserAvatar } from "@/components/user-avatar";
 import { modules } from "@/lib/modules";
 
 const moduleIcons: Record<string, IconName> = {
@@ -104,15 +105,14 @@ export function WorkspaceShell({
                         <span className="status-indicator" />
                         <span>Brasil · Português (BR)</span>
                     </div>
-                    <div className="profile-row">
-                        <div className="profile-avatar" aria-hidden="true">
-                            {username.trim().slice(0, 1).toLocaleUpperCase("pt-BR") || "U"}
-                        </div>
+                    <Link className="profile-row profile-link" href="/perfil" aria-label="Abrir meu perfil">
+                        <UserAvatar name={username} size={35} />
                         <div className="profile-details">
                             <strong>{username}</strong>
-                            <span>Conta conectada</span>
+                            <span>Gerenciar meu perfil</span>
                         </div>
-                    </div>
+                        <Icon name="chevron-right" size={16} />
+                    </Link>
                     <LogoutButton />
                 </div>
             </aside>
@@ -122,7 +122,7 @@ export function WorkspaceShell({
                     <div className="topbar-location">
                         <span className="topbar-brand">Zord</span>
                         <Icon name="chevron-right" size={15} />
-                        <span>{pathname === "/painel" ? "Visão geral" : modules.find((module) => pathname === `/${module.slug}`)?.title ?? "Gestão"}</span>
+                        <span>{pathname === "/painel" ? "Visão geral" : pathname === "/perfil" ? "Meu perfil" : modules.find((module) => pathname === `/${module.slug}`)?.title ?? "Gestão"}</span>
                     </div>
                     <div className="topbar-actions">
                         <form role="search" action="/clientes" method="GET" className="global-search">
@@ -137,6 +137,7 @@ export function WorkspaceShell({
                             <kbd>↵</kbd>
                         </form>
                         <span className="topbar-locale"><Icon name="globe" size={16} /> PT-BR</span>
+                        <Link className="topbar-profile-link" href="/perfil" aria-label="Meu perfil"><UserAvatar name={username} size={33} /></Link>
                     </div>
                 </header>
                 <main id="conteudo" className="main-content">
