@@ -60,9 +60,9 @@ export default async function ModulePage({ params, searchParams }: PageProps) {
     }
 
     return (
-        <div className="definition-page page-enter">
+        <div className="module-page page-enter">
             <div className="page-breadcrumb"><span>MÓDULOS</span><span className="breadcrumb-line" /> {definition.title.toUpperCase()}</div>
-            <div className="page-title-row definition-title-row">
+            <div className="page-title-row module-title-row">
                 <div>
                     <h1 className="page-title">{definition.title}<span className="title-period">.</span></h1>
                     <p className="page-subtitle">{definition.summary}. Informações atualizadas do seu ERP.</p>
