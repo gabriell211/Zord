@@ -1,14 +1,12 @@
 # Zord Web
 
-A interface principal do **Zord** é uma aplicação 100% acessível pelo navegador, com **Next.js 16, React 19, TypeScript 5.9 e Zod 4**.
-
-## Requisitos
-
-- Node.js 24 LTS
-- Serviço ERP Zord com banco PostgreSQL inicializado
-- Endpoint privado HTTPS para o ERP (HTTP somente em localhost)
+Aplicação nativa **100% web** do Zord, com **Next.js 16, React 19, TypeScript, Zod e PostgreSQL no Neon**, preparada para Vercel. A marca, a interface e os valores usam **pt-BR / BRL**.
 
 ## Desenvolvimento
+
+- Node.js 24
+- PostgreSQL 17 no Neon
+- Variáveis de servidor `DATABASE_URL` (SSL) e `ZORD_SETUP_TOKEN` (segredo aleatório com 32 caracteres ou mais)
 
 ```bash
 cd apps/web
@@ -17,36 +15,29 @@ npm ci
 npm run dev
 ```
 
-Abra `http://localhost:3000`. Se ainda não houver lockfile no checkout, gere-o com `npm install` antes de usar `npm ci`.
+Aplique ao Neon, nesta ordem, os arquivos SQL de `migrations/` **após validar em uma branch temporária**. Nunca exponha o banco ao navegador nem adicione `NEXT_PUBLIC_` aos segredos. A configuração inicial acontece em `/instalacao`; exige o segredo e só pode criar o primeiro administrador uma vez.
 
-## Variáveis de ambiente
+## Módulos nativos
 
-| Variável | Descrição |
-| --- | --- |
-| `ZORD_ERP_URL` | URL privada do serviço ERP, obrigatoriamente HTTPS em produção |
-| `ZORD_ERP_DB` | Nome do banco ERP, por padrão `zord` |
+- Acesso por senha com scrypt, sessão HTTP-only/secure em produção e limite de tentativas
+- Empresas e isolamento por `organization_id` em todas as operações de cadastro
+- Clientes: listar, pesquisar, cadastrar e editar
+- Produtos/estoque: listar, pesquisar, cadastrar e editar, com valor em **centavos inteiros** e SKU único por empresa
+- Avatar individual com validação de imagem
+- Dashboard: contagem de clientes e produtos
 
-Nunca exponha credenciais do PostgreSQL, cookies de sessão ou o serviço ERP diretamente para o navegador. O cliente web utiliza rotas servidoras, com cookie `HttpOnly`, `SameSite=Lax` e `Secure` em produção.
+As demais páginas de CRM, vendas, compras, PDV e financeiro são **estruturas de navegação**; não há implementação nativa ou homologação fiscal concluída. O ERP legado em Python presente na raiz do repositório **não é exigido** para as funcionalidades nativas descritas aqui.
 
-## Validação
+## Qualidade
 
 ```bash
-npm run lint
-npm run typecheck
-npm run test
-npm run build
+npm run check
 ```
 
-A integração utiliza RPC autenticado do ERP e respeita as regras de acesso de cada usuário. A interface inicial cobre login, dashboard e consultas de módulos; transações completas de PDV, emissão fiscal e homologação não foram implementadas nesta camada.
+A CI exige instalação sem warnings, ESLint, tipagem estrita, testes e build. Testes específicos verificam validações, preços brasileiros, conflitos de SKU e isolamento de produtos por empresa.
 
 ## Deploy
 
-Execute o Next.js em um servidor Node.js com HTTPS ou configure na Vercel o diretório raiz `apps/web`, com as variáveis necessárias. **A Vercel não hospeda o processo Python/PostgreSQL do ERP**: ele deve estar em infraestrutura própria ou serviço compatível, com HTTPS e isolamento de rede.
+Configure o projeto Vercel com diretório raiz `apps/web`, Node 24 e as variáveis de servidor. Execute migrações aprovadas no Neon **antes** de utilizar as rotas. Não coloque credenciais reais em commits.
 
-## Avatar individual por usuário
-
-Cada usuário possui seu próprio avatar na interface web, acessível em **Meu perfil**. A imagem é salva no registro `res.users.image_1920`, usando somente a identidade da sessão autenticada; a visualização usa `image_128` por uma rota privada com `Cache-Control: no-store`. O sistema aceita PNG, JPG e WebP de até 1 MB; arquivos SVG e formatos desconhecidos não são servidos. Sem imagem rasterizada válida, é exibida a inicial do usuário.
-
-## Cadastro de clientes
-
-A rota `/clientes` permite listar e buscar clientes existentes, cadastrar um novo cliente e editar dados básicos. A aplicação usa os controles de acesso do ERP para todas as operações e não opera como superusuário. Os dados passam por validação Zod, os métodos de alteração exigem origem correspondente, e IDs de edição precisam pertencer a registros classificados como clientes. Os campos fiscais brasileiros requerem integração posterior.
+O código-fonte importado na raiz mantém as obrigações de suas licenças originais, inclusive LGPL-3.0; consulte `LICENSE` e `docs/LICENCAS.md`.
