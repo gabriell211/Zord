@@ -1,0 +1,35 @@
+// Tema visual Zord, sem renomear as APIs internas do ERP.
+$zord-primary: #123d65;
+$zord-highlight: #00a6b8;
+
+.o_main_navbar {
+    background-color: $zord-primary;
+    border-bottom: 2px solid $zord-highlight;
+}
+
+.o_main_navbar .o_menu_brand,
+.o_main_navbar .o_nav_entry,
+.o_main_navbar .o_menu_toggle {
+    color: #fff;
+}
+
+.zord-login-identity {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+    color: $zord-primary;
+
+    strong {
+        font-size: 1.7rem;
+        letter-spacing: -0.035em;
+    }
+
+    small {
+        flex-basis: 100%;
+        color: #536b80;
+        text-align: center;
+    }
+}

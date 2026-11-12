@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="zord_layout" inherit_id="web.layout" name="Zord | Layout">
+        <xpath expr="//title[@t-out]" position="attributes">
+            <attribute name="t-out">title or 'Zord'</attribute>
+        </xpath>
+        <xpath expr="//link[@rel='shortcut icon']" position="attributes">
+            <attribute name="type">image/svg+xml</attribute>
+            <attribute name="t-att-href">x_icon or '/zord_brand/static/src/img/zord-icon.svg'</attribute>
+        </xpath>
+    </template>
+    <template id="zord_login" inherit_id="web.login_layout" name="Zord | Login">
+        <xpath expr="//div[contains(@class, 'card-body')]/t[@t-out='0']" position="before">
+            <div class="zord-login-identity" aria-label="Zord">
+                <img src="/zord_brand/static/src/img/zord-icon.svg" alt="" width="42" height="42"/>
+                <strong>Zord</strong>
+                <small>Gestão empresarial</small>
+            </div>
+        </xpath>
+        <xpath expr="//a[contains(@href, 'www.odoo.com')]" position="replace">
+            <span>Zord · Gestão empresarial</span>
+        </xpath>
+    </template>
+    <template id="zord_footer" inherit_id="web.brand_promotion_message" name="Zord | Rodapé">
+        <xpath expr="//t[@t-set='odoo_logo']" position="replace">
+            <t t-set="odoo_logo"><strong>Zord</strong></t>
+        </xpath>
+        <xpath expr="//t[@t-set='final_message']" position="replace">
+            <t t-set="final_message">%s%s</t>
+        </xpath>
+    </template>
+    <template id="zord_login_metadata" inherit_id="web.login" name="Zord | Metadados">
+        <xpath expr="//meta[@property='og:site_name']" position="attributes">
+            <attribute name="content">Zord</attribute>
+        </xpath>
+        <xpath expr="//meta[@name='twitter:site']" position="attributes">
+            <attribute name="content">Zord</attribute>
+        </xpath>
+    </template>
+</odoo>

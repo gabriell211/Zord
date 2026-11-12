@@ -1,0 +1,53 @@
+name: Importar base ERP para Zord
+
+on:
+  push:
+    paths:
+      - ".github/workflows/import-zord.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: importacao-zord
+  cancel-in-progress: false
+
+jobs:
+  importar:
+    name: Importar codigo e validar
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - name: Checkout Zord
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Importar base Community
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -f odoo-bin ]]; then
+            echo "Base ja importada."
+            exit 0
+          fi
+          source_dir="$(mktemp -d)"
+          git -C "$source_dir" init
+          git -C "$source_dir" remote add origin https://github.com/odoo/odoo.git
+          git -C "$source_dir" -c protocol.version=2 fetch --depth 1 origin 068157e09828034476404eb70260a252bc9c6ed3
+          git -C "$source_dir" checkout --detach FETCH_HEAD
+          rsync -a --exclude=".git" --exclude=".github" --exclude="README.md" --exclude="custom_addons" "$source_dir"/ ./
+          test -f LICENSE
+          test -f COPYRIGHT
+          test -f odoo-bin
+          python3 scripts/marca-zord.py
+          python3 -m compileall -q custom_addons/zord_brand scripts/marca-zord.py
+          python3 -m unittest discover -s tests -p 'test_zord_*.py'
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "feat: importar base ERP e aplicar identidade Zord"
+            git push origin HEAD:main
+          fi

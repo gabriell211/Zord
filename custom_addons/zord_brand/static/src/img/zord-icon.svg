@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Zord">
+  <rect width="128" height="128" rx="28" fill="#123d65"/>
+  <path d="M30 37h69v15L54 89h45v14H29V88l45-37H30z" fill="#fff"/>
+  <path d="M79 28h21v8H79z" fill="#00a6b8"/>
+</svg>
