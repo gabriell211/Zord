@@ -1,6 +1,6 @@
 # Zord Web
 
-A interface principal do **Zord** é uma aplicação 100% acessível pelo navegador, com **Next.js 16, React 19, TypeScript 7 e Zod 4**.
+A interface principal do **Zord** é uma aplicação 100% acessível pelo navegador, com **Next.js 16, React 19, TypeScript 5.9 e Zod 4**.
 
 ## Requisitos
 
