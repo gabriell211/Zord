@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: zord-web-${{ github.ref }}
@@ -63,6 +63,8 @@ jobs:
           key: next-cache-${{ runner.os }}-${{ hashFiles('apps/web/package.json') }}-${{ github.run_id }}
           restore-keys: |
             next-cache-${{ runner.os }}-${{ hashFiles('apps/web/package.json') }}-
+      - name: Preparar diretório de cache no primeiro build
+        run: mkdir -p .next/cache
       - name: Build de produção Next.js
         id: build
         run: |
@@ -78,14 +80,3 @@ jobs:
         with:
           path: apps/web/.next/cache
           key: ${{ steps.cache-next.outputs.cache-primary-key }}
-      - name: Registrar lockfile após validação
-        if: github.event_name == 'push'
-        run: |
-          set -euo pipefail
-          if git status --porcelain -- package-lock.json | grep -q .; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add package-lock.json
-            git commit -m "chore(web): fixar dependências após CI aprovado"
-            git push origin HEAD:main
-          fi
