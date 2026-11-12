@@ -39,6 +39,7 @@ node_modules
 jsconfig.json
 tsconfig.json
 package-lock.json
+!apps/web/package-lock.json
 package.json
 .husky
 

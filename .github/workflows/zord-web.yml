@@ -6,6 +6,7 @@ on:
     paths:
       - "apps/web/**"
       - ".github/workflows/zord-web.yml"
+      - ".gitignore"
   pull_request:
     branches: [main]
     paths:
