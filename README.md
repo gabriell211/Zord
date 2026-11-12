@@ -25,6 +25,10 @@ python3 odoo-bin -c config/zord.conf -d zord
 
 A criação do banco usa a localização brasileira e o módulo `zord_brand`. **Faça backup antes de aplicar alterações a bancos existentes.** Recomendamos configurar as credenciais de PostgreSQL fora do repositório e restringir acesso ao gerenciador de bancos.
 
+## Implantação na nuvem
+
+A interface web utiliza **Vercel (Next.js 16, Node.js 24)** e o banco PostgreSQL do **Neon**. O núcleo ERP em Python exige serviço persistente separado. Consulte [Implantação Zord — Vercel + Neon](docs/IMPLANTACAO-VERCEL-NEON.md) para as configurações reais, integração HTTPS, segredos e critérios de homologação.
+
 ## Tributação brasileira
 
 Configurar BRL e pt_BR **não** significa homologar NF-e, NFC-e, NFS-e, TEF, SPED ou obrigações tributárias. Esses módulos e integrações exigem avaliação e testes próprios.
