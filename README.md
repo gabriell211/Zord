@@ -27,7 +27,9 @@ A criação do banco usa a localização brasileira e o módulo `zord_brand`. **
 
 ## Implantação na nuvem
 
-A interface web utiliza **Vercel (Next.js 16, Node.js 24)** e o banco PostgreSQL do **Neon**. O núcleo ERP em Python exige serviço persistente separado. Consulte [Implantação Zord — Vercel + Neon](docs/IMPLANTACAO-VERCEL-NEON.md) para as configurações reais, integração HTTPS, segredos e critérios de homologação.
+A aplicação principal é **100% web** com **Vercel (Next.js 16, Node.js 24)** e **PostgreSQL no Neon**. Login, empresas, clientes, produtos/estoque e avatares usam o núcleo nativo em `apps/web`, sem necessidade de executar Python. O esquema SQL deve ser migrado antes do primeiro acesso. Veja [Zord Web](apps/web/README.md).
+
+A base ERP histórica em Python permanece no repositório como **legado e referência de migração**, sem integrar automaticamente os módulos de CRM, vendas, fiscal e PDV à aplicação nativa. Consulte [Implantação Zord — Vercel + Neon](docs/IMPLANTACAO-VERCEL-NEON.md) apenas para o cenário legado.
 
 ## Tributação brasileira
 
