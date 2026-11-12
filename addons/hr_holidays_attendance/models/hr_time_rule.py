@@ -1,0 +1,19 @@
+# Part of Odoo. See LICENSE file for full copyright and licensing details.
+
+from odoo import models
+
+
+class HrTimeRule(models.Model):
+    _inherit = 'hr.time.rule'
+
+    def _apply_attendance_output(self, excess, deficit, active_iv=None):
+        """Apply the results on attendances, then credit or deduct the allocations
+        (``hr.time.rule._apply_allocation_credits``).
+
+        :return: the result of the base method, see ``hr.time.rule._apply_output``
+        :rtype: tuple
+        """
+        result = super()._apply_attendance_output(excess, deficit, active_iv=active_iv)
+        _new_records, _all_source_ids, excess_alloc, deficit_alloc = result
+        self._apply_allocation_credits(excess_alloc, deficit_alloc)
+        return result

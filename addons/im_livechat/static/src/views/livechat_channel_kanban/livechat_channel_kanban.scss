@@ -1,0 +1,13 @@
+.o-livechat-ChannelKanban-highlighted {
+    background-color: $o-component-active-bg !important;
+    color: $o-component-active-color;
+
+    &::before {
+        background-color: $o-component-active-bg !important;
+    }
+}
+
+.o_kanban_record:has(.o-livechat-ChannelKanban-highlighted) .o_dropdown_kanban .btn {
+    --btn-hover-bg: #{$dropdown-link-hover-bg};
+    --btn-hover-border-color: transparent;
+}

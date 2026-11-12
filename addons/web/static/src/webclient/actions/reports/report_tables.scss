@@ -1,0 +1,285 @@
+// This file regroups the fixes and styling related to table inside reports
+
+table.table {
+    // Fix alignment in PDF (default bs inheritance doesn't seem to apply)
+    td {
+        vertical-align: $table-cell-vertical-align;
+    }
+
+    th {
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .o_line_section {
+        border-top: $border-width solid $o-gray-400;
+    }
+
+    .o_line_section {
+        td, td.o_price_total {
+            background-color: $gray-200;
+        }
+    }
+
+    .o_line_subsection {
+        td, td.o_price_total {
+            background-color: $gray-100;
+        }
+    }
+}
+
+div#total {
+    // Avoid crop in the total table if in middle of 2 pages
+    page-break-inside: avoid;
+}
+
+// Table styling of the reports, apply the styling class .o_table_x
+// to the .article bloc of the report to change the table style.
+
+.o_table_standard,
+.o_table_compact {
+    table:not(.o_ignore_layout_styling) {
+        thead {
+            border-bottom: $border-width solid $o-gray-900;
+        }
+
+        th:first-child, td:first-child {
+            padding-left: map-get($spacers, 1);
+        }
+
+        th:last-child, td:last-child {
+            padding-right: map-get($spacers, 1);
+        }
+
+        td, th {
+            padding-top: $table-cell-padding-y * .5;
+            padding-bottom: $table-cell-padding-y * .5;
+        }
+    }
+
+    .o_total_table:not(.o_ignore_layout_styling),
+    .o_total_table:not(.o_ignore_layout_styling) .o_total {
+        border-top: $border-width solid $border-color;
+    }
+}
+
+.o_table_compact {
+    table:not(.o_ignore_layout_styling) {
+        th:first-child, td:first-child {
+            padding-left: 0;
+        }
+
+        th:last-child, td:last-child {
+            padding-right: 0;
+        }
+
+        td, th {
+            padding-top: $table-cell-padding-y * .25;
+            padding-bottom: $table-cell-padding-y * .25;
+        }
+
+        td {
+            font-size: $font-size-sm;
+        }
+    }
+}
+
+.o_table_bold {
+    table:not(.o_ignore_layout_styling) {
+
+        td:first-child, th:first-child {
+            padding-left: map-get($spacers, 1);
+        }
+
+        td:last-child, th:last-child {
+            padding-right: map-get($spacers, 1);
+        }
+
+        &:not(.o_total_table) {
+            th:first-child {
+                padding-left: map-get($spacers, 1);
+            }
+
+            th:last-child {
+                padding-right: map-get($spacers, 1);
+            }
+        }
+
+        th {
+            font-weight: bold;
+            border-top: $border-width * 2 solid;
+            border-bottom: $border-width * 2 solid;
+        }
+
+        tr td {
+            border-bottom: $border-width solid;
+        }
+
+        .o_line_section, .o_line_subsection {
+            border-top: $border-width solid;
+        }
+    }
+}
+
+.o_table_striped {
+    table:not(.o_ignore_layout_styling) {
+        tbody tr {
+            &.o_line_section {
+                border: none;
+            }
+
+            &:first-child {
+                border-top: $border-width solid;
+            }
+
+            &:last-child {
+                border-bottom: $border-width solid;
+            }
+
+            &.is-subtotal {
+                border-bottom: $border-width solid;
+            }
+
+            &.o_total strong {
+                color: $body-color;
+            }
+        }
+    }
+}
+
+.o_table_boxed table:not(.o_ignore_layout_styling) {
+    thead {
+        text-transform: uppercase;
+
+        th:not(:last-child) {
+            border-right: $border-width solid $gray-700;
+        }
+    }
+}
+
+// A 1px GIF of $color: wkhtmltopdf paints a 1px image as a plain rectangle
+@function o-table-line($color) {
+    $hex: ie-hex-str($color);
+    @return url('data:image/gif,GIF89a%01%00%01%00%80%00%00%#{str-slice($hex, 4, 5)}%#{str-slice($hex, 6, 7)}%#{str-slice($hex, 8, 9)}%00%00%00,%00%00%00%00%01%00%01%00%00%02%02D%01%00;');
+}
+
+.o_table_boxed, .o_table_boxed-rounded {
+    table:not(.o_ignore_layout_styling) {
+        border-collapse: separate;
+        border-spacing: 0;
+
+        th, td {
+            // Right and bottom inner lines, hidden under the frame on the outer cells
+            background-image: o-table-line($gray-400), o-table-line($gray-400);
+            background-origin: border-box;
+            background-position: right top, left bottom;
+            background-size: $border-width 100%, 100% $border-width;
+            background-repeat: no-repeat;
+        }
+
+        th:first-child, td:first-child {
+            border-left: $border-width solid $gray-700;
+        }
+
+        th:last-child, td:last-child {
+            border-right: $border-width solid $gray-700;
+        }
+
+        &:not(.o_total_table) tbody:first-child tr:first-child td {
+            border-top: $border-width solid $gray-700;
+        }
+
+        thead th {
+            border-top: $border-width solid $gray-700;
+            background-image: none, o-table-line($border-color);
+        }
+
+        tbody {
+            &:last-child tr:last-child td {
+                border-bottom: $border-width solid $gray-700;
+            }
+
+            &.o_line_section td,
+            &.o_line_note td,
+            &.is-subtotal td {
+                border-top: $border-width solid $gray-700;
+                border-bottom: $border-width solid $gray-700;
+            }
+
+            tr:not(.o_line_section):not(.o_line_subsection):not(.o_line_combo) td.o_price_total,
+            .o_taxes td {
+                background-color: rgba($gray-200, .5);
+            }
+        }
+    }
+
+    .o_total_table:not(.o_ignore_layout_styling) {
+        td {
+            background-image: none, o-table-line($gray-400);
+        }
+    }
+
+    .mt-5 .o_total_table:not(.o_ignore_layout_styling) {
+        tbody:first-child tr:first-child td {
+            border-top: $border-width solid $border-color;
+        }
+    }
+}
+
+.o_table_boxed-rounded {
+    table:not(.o_ignore_layout_styling) {
+        th:first-child, &:not(.o_total_table) tbody:first-child tr:first-child td:first-child {
+            border-top-left-radius: $border-radius-lg;
+        }
+
+        th:last-child, &:not(.o_total_table) tbody:first-child tr:first-child td:last-child {
+            border-top-right-radius: $border-radius-lg;
+        }
+
+        tbody:last-child tr:last-child td:first-child {
+            border-bottom-left-radius: $border-radius-lg;
+        }
+
+        &:not(.o_has_total_table) tbody:last-child tr:last-child td:last-child {
+            border-bottom-right-radius: $border-radius-lg;
+        }
+
+        thead th {
+            background-image: none, o-table-line($gray-300);
+        }
+    }
+}
+
+.o_table_column {
+    table:not(.o_ignore_layout_styling) {
+
+        td:first-child, th:first-child {
+            padding-left: map-get($spacers, 1);
+        }
+
+        td:last-child, th:last-child {
+            padding-right: map-get($spacers, 1);
+        }
+
+        &:not(.o_total_table) {
+            th:first-child {
+                padding-left: map-get($spacers, 1);
+            }
+
+            th:last-child {
+                padding-right: map-get($spacers, 1);
+            }
+
+            td:not(:last-child) {
+                border-right: $border-width solid $o-gray-400;
+            }
+        }
+
+        border-bottom: $border-width solid $o-gray-400;
+
+        .o_line_section, .o_line_subsection, .o_line_combo {
+            border-bottom: $border-width solid $o-gray-400;
+            border-top: $border-width solid $o-gray-400;
+        }
+    }
+}

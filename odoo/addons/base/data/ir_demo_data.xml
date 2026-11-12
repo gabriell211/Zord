@@ -1,0 +1,27 @@
+<odoo>
+    <record model="ir.actions.act_window" id="demo_force_install_action">
+        <field name="name">Load demo data</field>
+        <field name="res_model">ir.demo</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record model="ir.ui.view" id="demo_force_install_form">
+        <field name="name">ir.demo.form</field>
+        <field name="model">ir.demo</field>
+        <field name="arch" type="xml">
+            <form>
+                <div class="alert alert-danger" role="alert">
+                    <i class="oi me-2" data-icon="warning" aria-hidden="true"/>Danger zone
+                </div>
+                <p>Demo data is meant for testing only. Once loaded, it <strong>cannot be removed</strong>.</p>
+                <p>Are you sure you want to load it into this database?</p>
+
+                <footer>
+                    <button special="cancel" data-hotkey="x" string="Oops, no!" class="btn-primary"/>
+                    <button name="install_demo" string="Yes, I understand the risks" type="object" class="btn-secondary" data-hotkey="q"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,186 @@
+import { getInnerContent } from "@html_builder/../tests/helpers";
+import { Builder } from "@html_builder/builder";
+import { expect, test } from "@odoo/hoot";
+import { click } from "@odoo/hoot-dom";
+import {
+    contains,
+    dataURItoBlob,
+    defineModels,
+    models,
+    onRpc,
+    patchWithCleanup,
+} from "@web/../tests/web_test_helpers";
+import {
+    defineWebsiteModels,
+    setupWebsiteBuilder,
+} from "@website/../tests/builder/website_helpers";
+
+defineWebsiteModels();
+
+class BlogPost extends models.Model {
+    _name = "blog.post";
+}
+defineModels([BlogPost]);
+
+const websiteServiceWithUserModelName = {
+    async getUserModelName() {
+        return "Blog Post";
+    },
+    // Minimal context to avoid crashes.
+    context: {},
+    currentWebsite: { id: 1, metadata: {} },
+    websites: [
+        {
+            id: 1,
+            metadata: {},
+        },
+    ],
+};
+
+test("Add image as cover", async () => {
+    patchWithCleanup(Builder.prototype, {
+        setup() {
+            super.setup();
+            this.env.services.website = websiteServiceWithUserModelName;
+            this.websiteService = websiteServiceWithUserModelName;
+        },
+    });
+
+    onRpc("ir.attachment", "search_read", () => [
+        {
+            id: 1,
+            name: "logo",
+            mimetype: "image/png",
+            image_src: "/web/image/hoot.png",
+            access_token: false,
+            public: true,
+        },
+    ]);
+
+    onRpc("/html_editor/get_image_info", () => ({
+        attachment: { id: 1 },
+        original: { id: 1, image_src: "/web/image/hoot.png", mimetype: "image/png" },
+    }));
+
+    onRpc("/web/image/hoot.png", () => {
+        const base64Image =
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYIIA" +
+            "A".repeat(1000); // converted image won't be used if original is not larger
+        return dataURItoBlob(base64Image);
+    });
+
+    const blogPostTitle = "Title of Test Post";
+
+    const { waitSidebarUpdated } = await setupWebsiteBuilder(`
+        <div class="o_record_cover_container" data-res-model="blog.post" data-res-id="3">
+            <div class="o_record_cover_image"/>
+            <h1 data-oe-model="blog.post" data-oe-id="3" data-oe-field="name">${blogPostTitle}</h1>
+        </div>
+    `);
+
+    await contains(":iframe h1").click();
+    expect("[data-action-id='setCoverBackground'][data-action-param]").toHaveCount(1);
+    await contains("[data-action-id='setCoverBackground'][data-action-param]").click();
+    // We use "click" instead of contains.click because contains wait for the image to be visible.
+    // In this test we don't want to wait ~800ms for the image to be visible but we can still click on it
+    await click(".o_existing_attachment_cell .o_button_area");
+    await waitSidebarUpdated();
+    expect(":iframe .o_record_cover_image").toHaveStyle({
+        "background-image": /url\("data:image\/webp;base64,(.*)"\)/,
+    });
+    expect(":iframe .o_record_cover_image").toHaveClass("o_b64_cover_image_to_save");
+
+    const expectedName = `Blog Post '${blogPostTitle}' cover image.webp`;
+    const encodedName = encodeURIComponent(expectedName).replace(/'/g, "%27");
+    onRpc("/web_editor/attachment/add_data", async (request) => {
+        expect.step("save attachment");
+        const { name } = (await request.json()).params;
+        expect(name).toBe(expectedName);
+        return { image_src: `/web/image/${encodedName}` };
+    });
+    onRpc("ir.ui.view", "save", ({ args }) => true);
+    onRpc("blog.post", "write", ({ args: [[id], { cover_properties }] }) => {
+        expect.step("save cover");
+        expect(id).toBe(3);
+        const { "background-image": bg, resize_class } = JSON.parse(cover_properties);
+        expect(bg).toBe(`url("/web/image/${encodedName}")`);
+        expect(resize_class.split(" ")).toInclude("o_record_has_cover");
+        return true;
+    });
+
+    await contains(".o-snippets-top-actions button[data-action='save']").click();
+    expect.verifySteps(["save attachment", "save cover"]);
+});
+
+test("Cover container with data-res-model is neither savable nor editable", async () => {
+    await setupWebsiteBuilder(`
+        <div class="o_record_cover_container" data-res-model="blog.post" data-res-id="3">
+            <div class="o_record_cover_image"/>
+            <h1 data-oe-model="blog.post" data-oe-id="3" data-oe-field="name">Title</h1>
+        </div>
+    `);
+
+    expect(":iframe .o_record_cover_container").not.toHaveClass("o_savable");
+    expect(":iframe .o_record_cover_container").not.toHaveAttribute("contenteditable", "true");
+});
+
+test("No dropzone is created in a record cover", async () => {
+    // Covers are placed outside `#wrap`, like on a real record page, where
+    // `#wrap` carries no branding.
+    await setupWebsiteBuilder("", {
+        headerContent: `
+            <div class="o_record_cover_container" data-res-model="blog.post" data-res-id="3">
+                <div class="o_record_cover_image"/>
+                <div class="o_cover_title">
+                    <h1 data-oe-model="blog.post" data-oe-id="3" data-oe-field="name" data-oe-type="char">Title</h1>
+                </div>
+                <nav style="min-height: 40px;"><ol><li><a href="#">Home</a></li></ol></nav>
+                <div data-oe-model="blog.post" data-oe-id="3" data-oe-field="content" data-oe-type="html">
+                    <div><h1>Content</h1></div>
+                </div>
+            </div>`,
+        snippets: {
+            snippet_content: [
+                getInnerContent({
+                    name: "Quote",
+                    content: `<blockquote class="s_blockquote" data-snippet="s_blockquote" data-name="Quote">Quote</blockquote>`,
+                }),
+            ],
+        },
+    });
+
+    await contains(".o-snippets-menu #snippet_content .o_snippet_thumbnail").drag();
+    // Next to a field of the cover, and inside an element of the cover: both
+    // would be saved through the cover, which only writes back its
+    // `cover_properties`.
+    expect(":iframe .o_cover_title .oe_drop_zone").toHaveCount(0);
+    expect(":iframe .o_record_cover_container > nav .oe_drop_zone").toHaveCount(0);
+    // The html field is savable on its own and still accepts blocks.
+    expect(":iframe [data-oe-field='content'] .oe_drop_zone").toHaveCount(2);
+});
+
+test("Changing the cover size saves its properties", async () => {
+    await setupWebsiteBuilder("", {
+        headerContent: `
+            <div class="o_record_cover_container cover_auto" data-res-model="blog.post"
+                 data-res-id="3" data-use_size="True">
+                <div class="o_record_cover_image"/>
+                <h1 data-oe-model="blog.post" data-oe-id="3" data-oe-field="name">Title</h1>
+            </div>`,
+    });
+
+    await contains(":iframe h1").click();
+    await contains("[data-class-action='o_half_screen_height']").click();
+
+    onRpc("blog.post", "write", ({ args: [[id], { cover_properties }] }) => {
+        expect.step("save cover");
+        expect(id).toBe(3);
+        expect(JSON.parse(cover_properties).resize_class.split(" ")).toInclude(
+            "o_half_screen_height"
+        );
+        return true;
+    });
+
+    await contains(".o-snippets-top-actions button[data-action='save']").click();
+    expect.verifySteps(["save cover"]);
+});
