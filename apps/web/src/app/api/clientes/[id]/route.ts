@@ -4,7 +4,6 @@ import { getCustomer, updateCustomer, CustomerNotFoundError } from "@/lib/custom
 import { readJsonBodyLimited } from "@/lib/avatar";
 import { sameOrigin } from "@/lib/origin";
 import { atualizarClienteSchema } from "@/lib/validation";
-import { ErpConnectionError } from "@/lib/erp";
 
 export const runtime = "nodejs";
 const headers = { "Cache-Control": "private, no-store" };
