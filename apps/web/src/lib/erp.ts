@@ -46,9 +46,15 @@ export async function listRecords(
 
 export async function countRecords(sessionId: string, model: string): Promise<number> {
     const organizationId = await requireOrganization(sessionId);
-    if (model !== "res.partner" && model !== "product.template") throw new ErpRequestError();
+    if (model !== "res.partner" && model !== "product.template" && model !== "sale.order") throw new ErpRequestError();
     const db = database();
-    const rows = model === "product.template"
+    const rows = model === "sale.order"
+        ? await db`
+            SELECT COUNT(*)::int AS total
+            FROM zord_sales
+            WHERE organization_id = ${organizationId}
+        `
+        : model === "product.template"
         ? await db`
             SELECT COUNT(*)::int AS total
             FROM zord_products
