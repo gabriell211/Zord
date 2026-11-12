@@ -44,7 +44,7 @@ function allowedValues(data: Partial<ClienteInput>): Record<string, string | fal
 }
 
 export async function listCustomers(sessionId: string, query = ""): Promise<Customer[]> {
-    const domain: unknown[][] = [["customer_rank", ">", 0], ["active", "=", true]];
+    const domain: unknown[] = [["customer_rank", ">", 0], ["active", "=", true]];
     if (query.trim()) {
         domain.push("|", ["name", "ilike", query.trim()], ["email", "ilike", query.trim()]);
     }
