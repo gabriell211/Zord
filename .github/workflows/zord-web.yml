@@ -40,9 +40,9 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -f package-lock.json ]]; then
-            npm ci --no-audit --no-fund 2>&1 | tee /tmp/zord-npm.log
+            npm ci --strict-peer-deps --no-audit --no-fund 2>&1 | tee /tmp/zord-npm.log
           else
-            npm install --no-audit --no-fund 2>&1 | tee /tmp/zord-npm.log
+            npm install --strict-peer-deps --no-audit --no-fund 2>&1 | tee /tmp/zord-npm.log
           fi
           if grep -Ei '(^npm warn|deprecated|unsupported engine)' /tmp/zord-npm.log; then
             echo "Falha: a instalação produziu advertências."
