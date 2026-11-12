@@ -15,8 +15,8 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { slug } = await params;
-    const module = getModule(slug);
-    return { title: module?.title ?? "Não encontrado" };
+    const definition = getModule(slug);
+    return { title: definition?.title ?? "Não encontrado" };
 }
 
 const searchSchema = z.string().trim().max(80);
@@ -43,8 +43,8 @@ function displayCell(record: Record<string, unknown>, column: Column): string {
 
 export default async function ModulePage({ params, searchParams }: PageProps) {
     const { slug } = await params;
-    const module = getModule(slug);
-    if (!module) notFound();
+    const definition = getModule(slug);
+    if (!definition) notFound();
 
     const rawSearch = (await searchParams).busca;
     const parsed = searchSchema.safeParse(typeof rawSearch === "string" ? rawSearch : "");
@@ -54,18 +54,18 @@ export default async function ModulePage({ params, searchParams }: PageProps) {
     let rows: Record<string, unknown>[] = [];
     let failed = false;
     try {
-        rows = await listRecords(id, module.model, module.columns.map((column) => column.key), search);
+        rows = await listRecords(id, definition.model, definition.columns.map((column) => column.key), search);
     } catch {
         failed = true;
     }
 
     return (
-        <div className="module-page page-enter">
-            <div className="page-breadcrumb"><span>MÓDULOS</span><span className="breadcrumb-line" /> {module.title.toUpperCase()}</div>
-            <div className="page-title-row module-title-row">
+        <div className="definition-page page-enter">
+            <div className="page-breadcrumb"><span>MÓDULOS</span><span className="breadcrumb-line" /> {definition.title.toUpperCase()}</div>
+            <div className="page-title-row definition-title-row">
                 <div>
-                    <h1 className="page-title">{module.title}<span className="title-period">.</span></h1>
-                    <p className="page-subtitle">{module.summary}. Informações atualizadas do seu ERP.</p>
+                    <h1 className="page-title">{definition.title}<span className="title-period">.</span></h1>
+                    <p className="page-subtitle">{definition.summary}. Informações atualizadas do seu ERP.</p>
                 </div>
                 <Link className="button button-secondary button-back" href="/painel">
                     <Icon name="overview" size={18} /> Visão geral
@@ -108,11 +108,11 @@ export default async function ModulePage({ params, searchParams }: PageProps) {
                         description={search ? "Tente uma busca diferente ou remova o filtro." : "Os registros aparecerão aqui quando forem cadastrados no sistema."}
                     />
                 ) : (
-                    <div className="table-scroll" tabIndex={0} role="region" aria-label={`Tabela de ${module.title}`}>
+                    <div className="table-scroll" tabIndex={0} role="region" aria-label={`Tabela de ${definition.title}`}>
                         <table className="data-table">
                             <thead>
                                 <tr>
-                                    {module.columns.map((column) => (
+                                    {definition.columns.map((column) => (
                                         <th scope="col" key={column.key}>{column.label}</th>
                                     ))}
                                     <th scope="col" className="table-end">#</th>
@@ -121,7 +121,7 @@ export default async function ModulePage({ params, searchParams }: PageProps) {
                             <tbody>
                                 {rows.map((row, index) => (
                                     <tr key={typeof row.id === "number" ? row.id : index}>
-                                        {module.columns.map((column, columnIndex) => (
+                                        {definition.columns.map((column, columnIndex) => (
                                             <td key={column.key} className={columnIndex === 0 ? "table-primary" : ""}>
                                                 {displayCell(row, column)}
                                             </td>
