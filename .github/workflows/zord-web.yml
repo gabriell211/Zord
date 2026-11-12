@@ -54,7 +54,16 @@ jobs:
         run: npm run typecheck
       - name: Testes de validação e segurança
         run: npm run test
+      - name: Restaurar cache de compilação Next.js
+        id: cache-next
+        uses: actions/cache/restore@v6
+        with:
+          path: apps/web/.next/cache
+          key: next-cache-${{ runner.os }}-${{ hashFiles('apps/web/package.json') }}-${{ github.run_id }}
+          restore-keys: |
+            next-cache-${{ runner.os }}-${{ hashFiles('apps/web/package.json') }}-
       - name: Build de produção Next.js
+        id: build
         run: |
           set -euo pipefail
           npm run build 2>&1 | tee /tmp/zord-build.log
@@ -62,6 +71,12 @@ jobs:
             echo "Falha: a compilação gerou advertências."
             exit 1
           fi
+      - name: Salvar cache da compilação Next.js
+        if: ${{ always() && steps.build.outcome != 'skipped' && steps.cache-next.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: apps/web/.next/cache
+          key: ${{ steps.cache-next.outputs.cache-primary-key }}
       - name: Registrar lockfile após validação
         if: github.event_name == 'push'
         run: |
