@@ -334,3 +334,22 @@ svg { flex-shrink: 0; }
   .profile-details-table div { grid-template-columns: 1fr; gap: 5px; }
   .avatar-editor-actions .button { min-height: 42px; padding: 10px 12px; }
 }
+
+
+/* Zord · Gestao de clientes */
+.customer-form { width: min(100%, 810px); overflow: hidden; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); background: white; }
+.customer-form-heading { padding: 30px clamp(20px, 4vw, 35px) 25px; border-bottom: 1px solid var(--line); }
+.customer-form-heading h2 { font-size: 20px; color: #233850; letter-spacing: -.04em; margin: 11px 0 7px; }
+.customer-form-heading p { color: #7a8b9c; font-size: 11.5px; line-height: 1.75; margin: 0; }
+.customer-fields { padding: 30px clamp(20px, 4vw, 35px) 35px; display: grid; gap: 23px; }
+.customer-fields-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 17px; }
+.customer-form-footer { display: flex; align-items: center; justify-content: flex-end; gap: 11px; padding: 20px clamp(20px, 4vw, 35px); background: #fbfcfe; border-top: 1px solid var(--line); }
+.customer-form > .form-error { margin: 0 clamp(20px, 4vw, 35px) 20px; }
+.customer-edit-link { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 7px 9px; color: #355e82; border-radius: 7px; font-size: 11px; font-weight: 740; }
+.customer-edit-link:hover { background: #edf3f9; }
+.customer-success { margin: -15px 0 20px; border-color: #d0e6db; color: #2f755c; background: #eef7f2; }
+@media (max-width: 630px) {
+  .customer-fields-row { grid-template-columns: 1fr; }
+  .customer-form-footer { flex-wrap: wrap; }
+  .customer-form-footer .button { flex: 1; }
+}
