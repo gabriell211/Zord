@@ -1,6 +1,6 @@
 # Zord
 
-**Zord** é uma plataforma de gestão empresarial para o Brasil, desenvolvida a partir de uma base ERP de código aberto.
+**Zord** é uma plataforma de gestão empresarial para o Brasil.
 
 ## Padrões do produto
 
