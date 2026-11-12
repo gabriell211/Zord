@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 const headers = { "Cache-Control": "private, no-store" };
 type Context = { params: Promise<{ id: string }> };
 function parseId(value: string): number | null {
-    if (!/^[1-9]\\d{0,9}$/.test(value)) return null;
+    if (!/^[1-9]\d{0,9}$/.test(value)) return null;
     const id = Number(value);
     return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
