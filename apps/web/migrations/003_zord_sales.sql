@@ -11,6 +11,7 @@ CREATE TABLE zord_sales (
     customer_id integer NOT NULL,
     created_by integer NOT NULL,
     idempotency_key uuid NOT NULL,
+    request_fingerprint char(64) NOT NULL,
     status varchar(16) NOT NULL DEFAULT 'draft'
         CHECK (status IN ('draft', 'confirmed')),
     total_cents bigint NOT NULL CHECK (total_cents >= 0 AND total_cents <= 2000000000000),
