@@ -61,7 +61,7 @@ function tokenHash(raw: string): string {
 
 async function hashPassword(password: string): Promise<string> {
     const salt = randomBytes(16).toString("hex");
-    const derived = await derive(password, salt, 64);
+    const derived = await derive(password, salt);
     return ["scrypt", salt, derived.toString("hex")].join("$");
 }
 
@@ -69,7 +69,7 @@ export async function verifyPassword(password: string, stored: string): Promise<
     const match = /^scrypt\$([0-9a-f]{32})\$([0-9a-f]{128})$/.exec(stored);
     const salt = match?.[1] ?? "0".repeat(32);
     const reference = Buffer.from(match?.[2] ?? "0".repeat(128), "hex");
-    const actual = await derive(password, salt, 64);
+    const actual = await derive(password, salt);
     return Boolean(match) && timingSafeEqual(reference, actual);
 }
 
