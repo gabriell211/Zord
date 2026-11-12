@@ -1,49 +1,71 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { createCustomer, getCustomer, listCustomers, updateCustomer, CustomerNotFoundError } from "@/lib/customers";
-import { modelCall } from "@/lib/erp";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createCustomer, CustomerAccessError, CustomerNotFoundError, getCustomer, listCustomers, updateCustomer } from "@/lib/customers";
+import { database } from "@/lib/database";
+import { getSessionUser } from "@/lib/identity";
 
-vi.mock("@/lib/erp", async (importOriginal) => {
-    const real = await importOriginal<typeof import("@/lib/erp")>();
-    return { ...real, modelCall: vi.fn() };
+vi.mock("@/lib/database", () => ({ database: vi.fn() }));
+vi.mock("@/lib/identity", () => ({ getSessionUser: vi.fn() }));
+
+const db = vi.mocked(database);
+const session = vi.mocked(getSessionUser);
+const query = vi.fn();
+
+beforeEach(() => {
+    db.mockReset().mockReturnValue(query as unknown as ReturnType<typeof database>);
+    session.mockReset().mockResolvedValue({
+        uid: 4, name: "Responsável", username: "a@b.com", organizationId: 17, role: "owner",
+    });
+    query.mockReset();
 });
 
-const call = vi.mocked(modelCall);
-const row = { id: 7, name: "Empresa Alfa", email: "contato@alfa.com.br", phone: "48999999999", customer_rank: 1 };
+const row = { id: 7, name: "Empresa Alfa", email: "alfa@example.com", phone: "48999999999" };
 
-beforeEach(() => call.mockReset());
+function interpolatedValues(): unknown[] {
+    return query.mock.calls[0]?.slice(1) ?? [];
+}
 
-describe("Zord · clientes com permissoes ERP", () => {
-    it("busca apenas clientes visiveis ao usuario", async () => {
-        call.mockResolvedValue([row]);
-        const result = await listCustomers("sessao", "Alfa");
-        expect(result[0]?.name).toBe("Empresa Alfa");
-        expect(call).toHaveBeenCalledWith("sessao", "res.partner", "search_read", [], expect.objectContaining({
-            domain: [["customer_rank", ">", 0], ["active", "=", true], "|", ["name", "ilike", "Alfa"], ["email", "ilike", "Alfa"]],
-        }));
+describe("Zord · clientes isolados por empresa", () => {
+    it("lista apenas os registros com filtro do tenant da sessão", async () => {
+        query.mockResolvedValue([row]);
+        const customers = await listCustomers("token", "Alfa");
+        expect(customers[0]?.name).toBe("Empresa Alfa");
+        expect(interpolatedValues()).toContain(17);
+        expect(interpolatedValues()).toContain("%Alfa%");
     });
 
-    it("cria apenas os campos autorizados com status de cliente", async () => {
-        call.mockResolvedValue(8);
-        expect(await createCustomer("sessao", { nome: "Empresa Beta", email: "", telefone: "" })).toBe(8);
-        expect(call).toHaveBeenCalledWith("sessao", "res.partner", "create", [{
-            name: "Empresa Beta", email: false, phone: false, customer_rank: 1,
-        }]);
+    it("cadastra na empresa da sessão, nunca em tenant arbitrário", async () => {
+        query.mockResolvedValue([{ id: 8 }]);
+        expect(await createCustomer("token", {
+            nome: "Empresa Beta", email: "", telefone: "",
+        })).toBe(8);
+        expect(interpolatedValues()).toContain(17);
+        expect(interpolatedValues()).toContain("Empresa Beta");
+        expect(interpolatedValues()).not.toContain(99);
     });
 
-    it("recusa editar um registro que nao pertence ao cadastro de clientes", async () => {
-        call.mockResolvedValue([{ ...row, customer_rank: 0 }]);
-        await expect(updateCustomer("sessao", 7, { nome: "Empresa Atualizada" })).rejects.toBeInstanceOf(CustomerNotFoundError);
-        expect(call).toHaveBeenCalledTimes(1);
+    it("recusa ler clientes de outra empresa", async () => {
+        query.mockResolvedValue([]);
+        await expect(getCustomer("token", 999)).rejects.toBeInstanceOf(CustomerNotFoundError);
+        expect(interpolatedValues()).toContain(17);
     });
 
-    it("atualiza somente os dados permitidos", async () => {
-        call.mockResolvedValueOnce([row]).mockResolvedValueOnce(true);
-        await updateCustomer("sessao", 7, { telefone: "(48) 3456-1234" });
-        expect(call).toHaveBeenLastCalledWith("sessao", "res.partner", "write", [[7], { phone: "(48) 3456-1234" }]);
+    it("atualiza campos validados apenas no tenant da sessão", async () => {
+        query.mockResolvedValue([{ id: 7 }]);
+        await updateCustomer("token", 7, { telefone: "(48) 3456-1234" });
+        expect(interpolatedValues()).toContain(17);
+        expect(interpolatedValues()).toContain(7);
+        expect(interpolatedValues()).toContain("(48) 3456-1234");
     });
 
-    it("nao encontra ids arbitrarios", async () => {
-        call.mockResolvedValue([]);
-        await expect(getCustomer("sessao", 999)).rejects.toBeInstanceOf(CustomerNotFoundError);
+    it("rejeita alterações sem campos ou em registro não visível", async () => {
+        await expect(updateCustomer("token", 7, {})).rejects.toThrow();
+        query.mockResolvedValue([]);
+        await expect(updateCustomer("token", 999, { nome: "Outro" })).rejects.toBeInstanceOf(CustomerNotFoundError);
+    });
+
+    it("exige uma sessão ativa", async () => {
+        session.mockResolvedValue(null);
+        await expect(listCustomers("token", "")).rejects.toBeInstanceOf(CustomerAccessError);
+        expect(query).not.toHaveBeenCalled();
     });
 });

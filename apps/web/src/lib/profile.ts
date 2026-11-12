@@ -1,44 +1,62 @@
 import { z } from "zod";
-import { modelCall, ErpRequestError } from "@/lib/erp";
+import { validatedAvatarBytes } from "@/lib/avatar";
+import { database } from "@/lib/database";
+import { getSessionUser } from "@/lib/identity";
 
-const userReadSchema = z.array(z.object({
+const profileSchema = z.object({
     id: z.number().int().positive(),
-    name: z.union([z.string(), z.literal(false)]).optional(),
-    email: z.union([z.string(), z.literal(false)]).optional(),
-}));
+    name: z.string(),
+    email: z.string(),
+});
 
-const avatarReadSchema = z.array(z.object({
-    id: z.number().int().positive(),
-    image_128: z.union([z.string(), z.literal(false)]).optional(),
-}));
+export type UserProfile = z.infer<typeof profileSchema>;
 
-export type UserProfile = {
-    id: number;
-    name: string;
-    email: string;
-};
+async function validateOwner(sessionId: string, uid: number): Promise<number> {
+    const user = await getSessionUser(sessionId);
+    if (!user || user.uid !== uid) throw new Error("Sem permissão para acessar este perfil.");
+    return user.organizationId;
+}
 
 export async function fetchOwnProfile(sessionId: string, uid: number): Promise<UserProfile> {
-    const data = await modelCall(sessionId, "res.users", "read", [[uid], ["name", "email"]]);
-    const result = userReadSchema.safeParse(data);
-    const record = result.success ? result.data[0] : undefined;
-    if (!record || record.id !== uid) throw new ErpRequestError();
-    return {
-        id: uid,
-        name: typeof record.name === "string" ? record.name : "Usuário",
-        email: typeof record.email === "string" ? record.email : "",
-    };
+    const organizationId = await validateOwner(sessionId, uid);
+    const db = database();
+    const rows = await db`
+        SELECT id, name, email
+        FROM zord_users
+        WHERE id = ${uid} AND organization_id = ${organizationId} AND active = true
+        LIMIT 1
+    `;
+    return profileSchema.parse(rows[0]);
 }
 
 export async function fetchOwnAvatar(sessionId: string, uid: number): Promise<string | null> {
-    const data = await modelCall(sessionId, "res.users", "read", [[uid], ["image_128"]]);
-    const result = avatarReadSchema.safeParse(data);
-    const record = result.success ? result.data[0] : undefined;
-    if (!record || record.id !== uid) throw new ErpRequestError();
-    return typeof record.image_128 === "string" ? record.image_128 : null;
+    const organizationId = await validateOwner(sessionId, uid);
+    const db = database();
+    const rows = await db`
+        SELECT avatar_data, avatar_mime
+        FROM zord_users
+        WHERE id = ${uid} AND organization_id = ${organizationId} AND active = true
+        LIMIT 1
+    `;
+    const image = rows[0]?.avatar_data;
+    if (!(image instanceof Uint8Array)) return null;
+    const base64 = Buffer.from(image).toString("base64");
+    return validatedAvatarBytes(base64, typeof rows[0]?.avatar_mime === "string" ? rows[0].avatar_mime : undefined)
+        ? base64 : null;
 }
 
 export async function saveOwnAvatar(sessionId: string, uid: number, base64: string | false): Promise<void> {
-    const data = await modelCall(sessionId, "res.users", "write", [[uid], { image_1920: base64 }]);
-    if (data !== true) throw new ErpRequestError();
+    const organizationId = await validateOwner(sessionId, uid);
+    const image = base64 ? validatedAvatarBytes(base64) : null;
+    if (base64 && !image) throw new Error("Imagem inválida.");
+    const db = database();
+    const rows = await db`
+        UPDATE zord_users
+        SET avatar_data = ${image?.data ?? null},
+            avatar_mime = ${image?.mime ?? null},
+            updated_at = now()
+        WHERE id = ${uid} AND organization_id = ${organizationId} AND active = true
+        RETURNING id
+    `;
+    if (rows.length === 0) throw new Error("Perfil não encontrado.");
 }

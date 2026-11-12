@@ -1,48 +1,50 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchOwnProfile, fetchOwnAvatar, saveOwnAvatar } from "@/lib/profile";
-import { modelCall, ErpRequestError } from "@/lib/erp";
+import { database } from "@/lib/database";
+import { getSessionUser } from "@/lib/identity";
 
-vi.mock("@/lib/erp", async (importOriginal) => {
-    const original = await importOriginal<typeof import("@/lib/erp")>();
-    return { ...original, modelCall: vi.fn() };
+vi.mock("@/lib/database", () => ({ database: vi.fn() }));
+vi.mock("@/lib/identity", () => ({ getSessionUser: vi.fn() }));
+
+const db = vi.mocked(database);
+const session = vi.mocked(getSessionUser);
+const query = vi.fn();
+const png = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 1, 2, 3, 4, 5, 6]);
+
+beforeEach(() => {
+    db.mockReset().mockReturnValue(query as unknown as ReturnType<typeof database>);
+    session.mockReset().mockResolvedValue({
+        uid: 12, name: "Gabriel", username: "g@example.com", organizationId: 17, role: "owner",
+    });
+    query.mockReset();
 });
 
-const call = vi.mocked(modelCall);
-beforeEach(() => call.mockReset());
-
-describe("Zord · isolamento dos avatares por usuário", () => {
-    it("consulta apenas a imagem do usuário autenticado", async () => {
-        call.mockResolvedValue([{ id: 12, image_128: "conteudo-base64" }]);
-        expect(await fetchOwnAvatar("sessao-segura", 12)).toBe("conteudo-base64");
-        expect(call).toHaveBeenCalledWith(
-            "sessao-segura", "res.users", "read", [[12], ["image_128"]],
-        );
+describe("Zord · avatar e perfil protegidos por identidade", () => {
+    it("carrega apenas o perfil da identidade da sessão", async () => {
+        query.mockResolvedValue([{ id: 12, name: "Gabriel", email: "g@example.com" }]);
+        expect((await fetchOwnProfile("sessao", 12)).email).toBe("g@example.com");
+        expect(query.mock.calls[0]?.slice(1)).toContain(17);
     });
 
-    it("rejeita resposta de outro usuário", async () => {
-        call.mockResolvedValue([{ id: 99, image_128: "conteudo-base64" }]);
-        await expect(fetchOwnAvatar("sessao-segura", 12)).rejects.toBeInstanceOf(ErpRequestError);
+    it("rejeita consultar avatar de outro usuário", async () => {
+        await expect(fetchOwnAvatar("sessao", 99)).rejects.toThrow();
+        expect(query).not.toHaveBeenCalled();
     });
 
-    it("altera somente o campo de imagem da própria conta", async () => {
-        call.mockResolvedValue(true);
-        await saveOwnAvatar("sessao-segura", 12, "imagem-base64");
-        expect(call).toHaveBeenCalledWith(
-            "sessao-segura", "res.users", "write", [[12], { image_1920: "imagem-base64" }],
-        );
+    it("retorna somente avatar rasterizado válido", async () => {
+        query.mockResolvedValue([{ avatar_data: png, avatar_mime: "image/png" }]);
+        expect(await fetchOwnAvatar("sessao", 12)).toBe(png.toString("base64"));
     });
 
-    it("trata falhas de permissão como erro", async () => {
-        call.mockResolvedValue(false);
-        await expect(saveOwnAvatar("sessao-segura", 12, false)).rejects.toBeInstanceOf(ErpRequestError);
+    it("atualiza a imagem em sua própria organização", async () => {
+        query.mockResolvedValue([{ id: 12 }]);
+        await saveOwnAvatar("sessao", 12, png.toString("base64"));
+        expect(query.mock.calls[0]?.slice(1)).toContain(17);
     });
 
-    it("exibe perfil do próprio usuário sem expor outra conta", async () => {
-        call.mockResolvedValue([{ id: 12, name: "Gabriel", email: "teste@example.com" }]);
-        const data = await fetchOwnProfile("sessao-segura", 12);
-        expect(data.name).toBe("Gabriel");
-        expect(call).toHaveBeenCalledWith(
-            "sessao-segura", "res.users", "read", [[12], ["name", "email"]],
-        );
+    it("recusa imagem ativa e modificações de contas alheias", async () => {
+        await expect(saveOwnAvatar("sessao", 12, Buffer.from("<svg/>").toString("base64"))).rejects.toThrow();
+        await expect(saveOwnAvatar("sessao", 99, false)).rejects.toThrow();
+        expect(query).not.toHaveBeenCalled();
     });
 });

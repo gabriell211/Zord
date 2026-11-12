@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { destroyErpSession } from "@/lib/erp";
+import { revokeSession } from "@/lib/identity";
 import { sessionCookieName, validSessionId } from "@/lib/auth";
 import { sameOrigin } from "@/lib/origin";
 
@@ -14,9 +14,9 @@ export async function POST(request: Request) {
     const id = (await cookies()).get(cookie)?.value;
     if (validSessionId(id)) {
         try {
-            await destroyErpSession(id);
+            await revokeSession(id);
         } catch {
-            // A sessao local sera encerrada mesmo quando o servico estiver offline.
+            // A sessão do navegador será removida mesmo se o banco estiver indisponível.
         }
     }
     const response = NextResponse.json({ ok: true }, {
