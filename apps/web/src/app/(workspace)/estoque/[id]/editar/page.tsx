@@ -9,7 +9,7 @@ type Props = { params: Promise<{ id: string }> };
 
 export default async function EditProductPage({ params }: Props) {
     const raw = (await params).id;
-    if (!/^[1-9]\\d{0,9}$/.test(raw)) notFound();
+    if (!/^[1-9]\d{0,9}$/.test(raw)) notFound();
     const id = Number(raw);
     if (!Number.isSafeInteger(id)) notFound();
     const { id: sessionId } = await getAuthorizedSession();
