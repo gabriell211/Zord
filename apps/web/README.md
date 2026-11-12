@@ -22,7 +22,7 @@ Aplique ao Neon, nesta ordem, os arquivos SQL de `migrations/` **após validar e
 - Acesso por senha com scrypt, sessão HTTP-only/secure em produção e limite de tentativas
 - Empresas e isolamento por `organization_id` em todas as operações de cadastro
 - Clientes: listar, pesquisar, cadastrar e editar
-- Produtos/estoque: listar, pesquisar, cadastrar e editar, com valor em **centavos inteiros** e SKU único por empresa
+- Produtos/estoque: listar, pesquisar, cadastrar e editar, com valor em **centavos inteiros** e SKU único por empresa\n- Vendas (após migração `003_zord_sales.sql`): propostas em rascunho, itens, valor em BRL, confirmação transacional e baixa atômica de estoque por empresa
 - Avatar individual com validação de imagem
 - Dashboard: contagem de clientes e produtos
 
