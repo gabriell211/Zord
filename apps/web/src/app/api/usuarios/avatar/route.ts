@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { sessionCookieName, validSessionId } from "@/lib/auth";
-import { getErpSession, ErpConnectionError } from "@/lib/erp";
+import { getSessionUser } from "@/lib/identity";
 import { avatarUploadSchema, readJsonBodyLimited, validatedAvatarBytes } from "@/lib/avatar";
 import { fetchOwnAvatar, saveOwnAvatar } from "@/lib/profile";
 import { sameOrigin } from "@/lib/origin";
@@ -18,13 +18,8 @@ const privateHeaders = {
 async function currentUser() {
     const id = (await cookies()).get(sessionCookieName())?.value;
     if (!validSessionId(id)) return null;
-    try {
-        const user = await getErpSession(id);
-        return { sessionId: id, uid: user.uid };
-    } catch (error) {
-        if (error instanceof ErpConnectionError) throw error;
-        return null;
-    }
+    const user = await getSessionUser(id);
+    return user ? { sessionId: id, uid: user.uid } : null;
 }
 
 export async function GET() {

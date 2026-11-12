@@ -1,10 +1,16 @@
 import { createHash, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
-import { promisify } from "node:util";
 import { z } from "zod";
 import { database, DatabaseUnavailableError } from "@/lib/database";
 import type { ConfiguracaoInicialInput } from "@/lib/validation";
 
-const derive = promisify(scrypt);
+function derive(password: string, salt: string): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+        scrypt(password, salt, 64, (error, derived) => {
+            if (error) reject(error);
+            else resolve(derived);
+        });
+    });
+}
 const SESSION_DAYS = 7;
 
 const userSchema = z.object({

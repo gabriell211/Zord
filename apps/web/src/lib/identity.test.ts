@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { scrypt } from "node:crypto";
-import { promisify } from "node:util";
+import { scryptSync } from "node:crypto";
 import { authenticate, bootstrapAdmin, getSessionUser, InvalidCredentialsError, verifyPassword } from "@/lib/identity";
 import { database } from "@/lib/database";
 
@@ -20,7 +19,7 @@ beforeEach(() => {
 describe("Zord · autenticação Neon", () => {
     it("verifica scrypt sem aceitar senha incorreta ou hash malformado", async () => {
         const salt = "1".repeat(32);
-        const hashed = (await promisify(scrypt)("senha-segura-123", salt, 64)).toString("hex");
+        const hashed = scryptSync("senha-segura-123", salt, 64).toString("hex");
         expect(await verifyPassword("senha-segura-123", "scrypt$" + salt + "$" + hashed)).toBe(true);
         expect(await verifyPassword("senha-errada", "scrypt$" + salt + "$" + hashed)).toBe(false);
         expect(await verifyPassword("senha-segura-123", "texto-invalido")).toBe(false);
